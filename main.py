@@ -4,7 +4,7 @@ import json
 import time
 import aiohttp
 import asyncio
-from fastapi import FastAPI, Response
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
 app = FastAPI()
