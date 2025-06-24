@@ -20,19 +20,26 @@ HTML_TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
     <title>TikTok API</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/json-formatter-js@2.3.4/dist/json-formatter.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/json-formatter-js@2.3.4/dist/json-formatter.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@andypf/json-viewer@2.0.0/dist/iife/index.min.js"></script>
     <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; padding: 1.5rem; }}
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 1rem;
+        }}
     </style>
 </head>
 <body>
-    <div id="json-container"></div>
-    <script>
-        const jsonData = {json_data};
-        const formatter = new JSONFormatter(jsonData, Infinity, {{ theme: 'dark', sortPropertiesBy: (a, b) => (a > b ? 1 : -1) }});
-        document.getElementById('json-container').appendChild(formatter.render());
-    </script>
+    <andypf-json-viewer
+        theme="monokai"
+        expanded="true"
+        show-toolbar="true"
+        show-copy="true"
+        show-size="true"
+        data='{json_data}'
+    ></andypf-json-viewer>
 </body>
 </html>
 """
@@ -92,8 +99,11 @@ async def fetch_profile(username: str):
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     instructions = {
-        "message": "To use this API, enter a TikTok username after the slash.",
-        "example": "https://<your-app-url>/thatsdemitri"
+        "api_info": {
+            "status": "online",
+            "usage": "To use this API, enter a TikTok username after the slash.",
+            "example": "/thatsdemitri"
+        }
     }
     html_content = HTML_TEMPLATE.format(json_data=json.dumps(instructions))
     return HTMLResponse(content=html_content)
@@ -101,13 +111,13 @@ async def read_root():
 @app.get("/{username}", response_class=HTMLResponse)
 async def get_profile(username: str):
     if not API_KEY or "YOUR_API_KEY" in API_KEY:
-        error_data = {"detail": "Server API key is not configured."}
+        error_data = {"error": "Server API key is not configured."}
         html_content = HTML_TEMPLATE.format(json_data=json.dumps(error_data))
         return HTMLResponse(content=html_content, status_code=500)
 
     data, error = await fetch_profile(username)
     if error:
-        error_data = {"detail": error}
+        error_data = {"error": error}
         html_content = HTML_TEMPLATE.format(json_data=json.dumps(error_data))
         return HTMLResponse(content=html_content, status_code=400)
 
