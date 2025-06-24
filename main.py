@@ -5,7 +5,7 @@ import time
 import aiohttp
 import uvicorn
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 
 app = FastAPI()
 
@@ -64,34 +64,27 @@ async def fetch_profile(username: str):
     except Exception as e:
         return None, f"An unexpected error occurred: {str(e)}"
 
+@app.get("/", response_class=HTMLResponse)
+async def read_root():
+    content = "To use this API, enter a TikTok username after the slash. For example: /thatsdemitri"
+    return HTMLResponse(content=content)
+
 @app.get("/{username}", response_class=HTMLResponse)
 async def get_profile(username: str):
     if not API_KEY or "YOUR_API_KEY" in API_KEY:
-        return HTMLResponse(content="Error: Server API key is not configured.", status_code=500)
+        error_json = json.dumps({"detail": "Server API key is not configured."})
+        html_content = f'''<html><head><meta name="color-scheme" content="light dark"><meta charset="utf-8"></head><body><pre>{error_json}</pre><div class="json-formatter-container"></div></body></html>'''
+        return Response(content=html_content, media_type="text/html", status_code=500)
 
     data, error = await fetch_profile(username)
     if error:
-        return HTMLResponse(content=f"Error: {error}", status_code=400)
+        error_json = json.dumps({"detail": error})
+        html_content = f'''<html><head><meta name="color-scheme" content="light dark"><meta charset="utf-8"></head><body><pre>{error_json}</pre><div class="json-formatter-container"></div></body></html>'''
+        return Response(content=html_content, media_type="text/html", status_code=400)
 
-    pretty_json = json.dumps(data, indent=4, ensure_ascii=False)
-    html_content = f'''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="color-scheme" content="light dark">
-        <title>Profile Data</title>
-        <style>
-            body {{ font-family: monospace; background-color: #1a1a1a; color: #f0f0f0; }}
-            pre {{ white-space: pre-wrap; word-wrap: break-word; }}
-        </style>
-    </head>
-    <body>
-        <pre>{pretty_json}</pre>
-    </body>
-    </html>
-    '''
-    return HTMLResponse(content=html_content)
+    compact_json = json.dumps(data, separators=(',', ':'), ensure_ascii=False)
+    html_content = f'''<html><head><meta name="color-scheme" content="light dark"><meta charset="utf-8"></head><body><pre>{compact_json}</pre><div class="json-formatter-container"></div></body></html>'''
+    return Response(content=html_content, media_type="text/html")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
