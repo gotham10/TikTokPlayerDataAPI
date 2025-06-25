@@ -16,30 +16,141 @@ HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light dark">
-    <title>TikTok API</title>
-    <script src="https://cdn.jsdelivr.net/npm/@andypf/json-viewer@2.0.0/dist/iife/index.min.js"></script>
-    <style>
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #121212;
-            color: #e0e0e0;
-            margin: 0;
-            padding: 1rem;
-        }}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON Viewer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+<style>
+body {{
+    margin: 0;
+    padding: 0;
+    background-color: #111111;
+    color: #f9fafb;
+    font-family: 'Roboto Mono', monospace;
+    height: 100vh;
+    overflow: hidden;
+}}
+*::-webkit-scrollbar {{
+    display: none;
+}}
+* {{
+    scrollbar-width: none;
+}}
+.json-formatter-header {{
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 24px;
+    background-color: #3c3c3c;
+    border-bottom: 1px solid #bbbbbb;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    padding-left: 0;
+}}
+#scrollArea {{
+    position: absolute;
+    top: 24px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow-y: scroll;
+    padding: 6px 8px;
+}}
+.pretty-print {{
+    white-space: pre-wrap;
+}}
+.single-line {{
+    white-space: pre-wrap;
+    word-break: break-word;
+}}
+label[for="prettyPrintToggle"] {{
+    margin: 0;
+    padding-left: 4px;
+}}
+.toggle-container {{
+    display: flex;
+    align-items: center;
+    margin-left: 6px;
+}}
+input[type="checkbox"] {{
+    display: none;
+}}
+.toggle-box {{
+    width: 13px;
+    height: 13px;
+    background-color: transparent;
+    border: 1.5px solid #aaaaaa;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}}
+input[type="checkbox"]:not(:checked) + .toggle-box:hover {{
+    border-color: #dddddd;
+}}
+input[type="checkbox"]:checked + .toggle-box {{
+    background-color: #99c8ff;
+    border: none;
+}}
+input[type="checkbox"]:checked + .toggle-box:hover {{
+    background-color: #d1e6ff;
+}}
+.toggle-box svg {{
+    width: 12px;
+    height: 10px;
+    fill: #3b3b3b;
+    display: none;
+    margin-left: -3px;
+}}
+input[type="checkbox"]:checked + .toggle-box svg {{
+    display: block;
+}}
+</style>
 </head>
 <body>
-    <andypf-json-viewer
-        theme="monokai"
-        expanded="true"
-        show-toolbar="true"
-        show-copy="true"
-        show-size="true"
-        data='{json_data}'
-    ></andypf-json-viewer>
+<div class="json-formatter-header">
+    <label for="prettyPrintToggle">Pretty-print</label>
+    <div class="toggle-container">
+        <input type="checkbox" id="prettyPrintToggle" checked>
+        <label class="toggle-box" for="prettyPrintToggle">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                <path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/>
+            </svg>
+        </label>
+    </div>
+</div>
+<div id="scrollArea">
+    <pre id="jsonContent" class="text-[13px] leading-snug"></pre>
+</div>
+<script>
+const jsonData = {json_data};
+const toggle = document.getElementById('prettyPrintToggle');
+const contentEl = document.getElementById('jsonContent');
+
+function updateView() {{
+    const prettyString = JSON.stringify(jsonData, null, 2);
+    const singleLineString = JSON.stringify(jsonData);
+    if (toggle.checked) {{
+        contentEl.textContent = prettyString;
+        contentEl.classList.add('pretty-print');
+        contentEl.classList.remove('single-line');
+    }} else {{
+        contentEl.textContent = singleLineString;
+        contentEl.classList.add('single-line');
+        contentEl.classList.remove('pretty-print');
+    }}
+}}
+toggle.addEventListener('change', updateView);
+updateView();
+</script>
 </body>
 </html>
 """
@@ -85,7 +196,7 @@ async def fetch_profile(username: str):
                 author_stats.pop(key, None)
 
         if 'signature' in author_info and isinstance(author_info['signature'], str):
-            author_info['signature'] = author_info['signature'].replace('\n', ' ')
+            author_info['signature'] = author_info['signature'].replace('\\n', ' ')
 
         data = {
             "author_details": author_info,
