@@ -52,6 +52,7 @@ body {{
     align-items: center;
     font-size: 12px;
     padding-left: 0;
+    user-select: none;
 }}
 #scrollArea {{
     position: absolute;
@@ -213,7 +214,7 @@ async def read_root():
         "api_info": {
             "status": "online",
             "usage": "To use this API, enter a TikTok username after the slash.",
-            "example": "/thatsdemitri"
+            "example": "https://tiktokplayerdataapi.onrender.com/TIKTOK_USERNAME_HERE"
         }
     }
     html_content = HTML_TEMPLATE.format(json_data=json.dumps(instructions))
